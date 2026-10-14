@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>DESTROIT BATTLE</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0b0714;
+    --bg2:#140b25;
+    --card:#1b1230;
+    --card2:#241740;
+    --line:#33245c;
+    --text:#f3eefe;
+    --muted:#a294c7;
+    --accent:#a855f7;
+    --accent2:#22d3ee;
+    --gold:#fbbf24;
+    --common:#9ca3af;
+    --rare:#38bdf8;
+    --epic:#a855f7;
+    --legend:#f59e0b;
+    --myth:#ef4444;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(900px 400px at 50% -10%, #3b1173 0%, transparent 60%),
+      linear-gradient(180deg,var(--bg) 0%, var(--bg2) 100%);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh;
+    padding:16px 14px 32px;
+  }
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .logo{
+    width:48px;height:48px;border-radius:14px;flex:0 0 48px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-size:24px;
+    box-shadow:0 8px 24px rgba(168,85,247,.45);
+  }
+  .topbar h1{margin:0;font-size:19px;letter-spacing:.5px}
+  .topbar p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .hello{
+    font-size:12px;color:var(--muted);margin-bottom:14px;
+    background:rgba(168,85,247,.10);border:1px solid var(--line);
+    border-radius:12px;padding:9px 12px
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .tile{
+    background:linear-gradient(160deg,var(--card2),var(--card));
+    border:1px solid var(--line);border-radius:18px;padding:14px 12px;
+    text-align:left;color:var(--text);font-family:inherit;font-size:14px;
+    display:flex;flex-direction:column;gap:8px;cursor:pointer;
+    transition:transform .12s ease, border-color .2s ease;
+    min-height:108px;
+  }
+  .tile:active{transform:scale(.97)}
+  .tile.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 10px 26px rgba(168,85,247,.28)}
+  .tile .ico{font-size:26px}
+  .tile .cap{font-weight:600;line-height:1.25}
+  .tile .sub{font-size:11px;color:var(--muted)}
+  .panel{
+    display:none;background:linear-gradient(160deg,var(--card2),var(--card));
+    border:1px solid var(--line);border-radius:18px;padding:16px
+  }
+  .panel.show{display:block;animation:pop .25s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .panel h2{margin:0 0 4px;font-size:17px}
+  .panel .hint{margin:0 0 14px;font-size:12px;color:var(--muted)}
+  .btn{
+    width:100%;border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:600;
+    font-family:inherit;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),#6366f1);
+    box-shadow:0 10px 24px rgba(99,102,241,.35);
+  }
+  .btn:active{transform:scale(.98)}
+  .btn[disabled]{opacity:.45;box-shadow:none;cursor:not-allowed}
+  .btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none;color:var(--text);font-weight:500}
+  .btn.cyan{background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 10px 24px rgba(34,211,238,.3)}
+  .case{
+    height:150px;border-radius:18px;margin-bottom:14px;
+    background:radial-gradient(circle at 50% 40%, rgba(168,85,247,.35), transparent 65%), #150c28;
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    font-size:64px;position:relative;overflow:hidden
+  }
+  .case.shake{animation:shake .5s ease infinite}
+  @keyframes shake{
+    0%,100%{transform:translateX(0) rotate(0)}
+    25%{transform:translateX(-7px) rotate(-4deg)}
+    75%{transform:translateX(7px) rotate(4deg)}
+  }
+  .case.win{background:radial-gradient(circle at 50% 40%, rgba(251,191,36,.4), transparent 65%), #150c28}
+  .reveal{font-size:15px;text-align:center;margin-top:10px;min-height:20px}
+  .timer{font-size:22px;text-align:center;font-variant-numeric:tabular-nums;margin-bottom:12px}
+  .timer small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+  .reel-wrap{
+    position:relative;overflow:hidden;border:1px solid var(--line);border-radius:14px;
+    background:#130a26;padding:10px 0;margin-bottom:16px
+  }
+  .reel{display:flex;gap:10px;padding:0 10px;will-change:transform}
+  .slot{
+    flex:0 0 82px;height:92px;border-radius:12px;border:1px solid var(--line);
+    background:linear-gradient(180deg,#241740,#1a1130);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    font-size:26px
+  }
+  .slot span{font-size:9px;color:var(--muted);text-align:center;padding:0 4px;line-height:1.15}
+  .marker{
+    position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;
+    background:linear-gradient(180deg,var(--gold),#f97316);
+    box-shadow:0 0 14px var(--gold);z-index:2
+  }
+  .inv{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;
+    background:#180f2c;border:1px solid var(--line);border-left-width:4px
+  }
+  .item .nm{flex:1;font-size:13px}
+  .item .dt{font-size:10px;color:var(--muted)}
+  .item.common{border-left-color:var(--common)}
+  .item.rare{border-left-color:var(--rare)}
+  .item.epic{border-left-color:var(--epic)}
+  .item.legend{border-left-color:var(--legend)}
+  .item.myth{border-left-color:var(--myth)}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:22px 8px;line-height:1.5}
+  .stat{display:flex;gap:10px;margin-bottom:12px}
+  .stat div{flex:1;background:#180f2c;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:18px}
+  .stat span{font-size:10px;color:var(--muted)}
+  .support{
+    text-align:center;padding:8px 4px 4px
+  }
+  .support .ava{
+    width:74px;height:74px;border-radius:50%;margin:0 auto 12px;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    display:flex;align-items:center;justify-content:center;font-size:32px
+  }
+  .support .nick{font-size:19px;font-weight:700;margin-bottom:4px}
+  .support .txt{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+  .toast{
+    position:fixed;left:50%;bottom:22px;transform:translate(-50%,140%);
+    background:#241740;border:1px solid var(--accent);color:var(--text);
+    padding:11px 16px;border-radius:12px;font-size:13px;z-index:50;
+    transition:transform .25s ease;max-width:88vw;text-align:center
+  }
+  .toast.show{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo">🎮</div>
+    <div>
+      <h1>DESTROIT BATTLE</h1>
+      <p>Открывай кейсы · собирай НФТ подарки</p>
+    </div>
+  </div>
+  <div class="hello" id="hello">Добро пожаловать в приложение!</div>
+
+  <div class="grid">
+    <button class="tile" data-tab="inv"><div class="ico">🎒</div><div class="cap">Инвентарь</div><div class="sub">Твои НФТ предметы</div></button>
+    <button class="tile" data-tab="case"><div class="ico">🎁</div><div class="cap">Ежедневный кейс</div><div class="sub">Раз в 24 часа</div></button>
+    <button class="tile" data-tab="roul"><div class="ico">🍀</div><div class="cap">Рулетка удачи</div><div class="sub">Крути и выигрывай</div></button>
+    <button class="tile" data-tab="supp"><div class="ico">🆘</div><div class="cap">Поддержка</div><div class="sub">@obounka</div></button>
+  </div>
+
+  <section class="panel show" id="panel-inv">
+    <h2>🎒 Инвентарь</h2>
+    <p class="hint">Все предметы, которые ты выбил в DESTROIT BATTLE.</p>
+    <div class="stat">
+      <div><b id="stat-count">0</b><span>ПРЕДМЕТОВ</span></div>
+      <div><b id="stat-best">—</b><span>ЛУЧШАЯ РЕДКОСТЬ</span></div>
+    </div>
+    <div class="inv" id="inv-list"></div>
+  </section>
+
+  <section class="panel" id="panel-case">
+    <h2>🎁 Ежедневный кейс</h2>
+    <p class="hint">Один бесплатный кейс каждые 24 часа.</p>
+    <div class="case" id="case-box">🎁</div>
+    <div class="timer" id="case-timer">Готово к открытию<small>Нажми кнопку ниже</small></div>
+    <button class="btn" id="case-btn">Открыть кейс</button>
+    <div class="reveal" id="case-reveal"></div>
+    <button class="btn ghost" id="case-send" style="display:none;margin-top:10px">📩 Сообщить боту о выигрыше</button>
+  </section>
+
+  <section class="panel" id="panel-roul">
+    <h2>🍀 Рулетка удачи</h2>
+    <p class="hint">Чем реже предмет — тем меньше шанс. Крути сколько хочешь.</p>
+    <div class="reel-wrap">
+      <div class="marker"></div>
+      <div class="reel" id="reel"></div>
+    </div>
+    <button class="btn cyan" id="spin-btn">Крутить рулетку</button>
+    <div class="reveal" id="roul-reveal"></div>
+  </section>
+
+  <section class="panel" id="panel-supp">
+    <div class="support">
+      <div class="ava">💬</div>
+      <div class="nick">@obounka</div>
+      <div class="txt">Поддержка DESTROIT BATTLE.<br>Вопросы по кейсам, НФТ подаркам и выводу — пишите сюда.</div>
+      <button class="btn" id="supp-btn">Написать в поддержку</button>
+      <button class="btn ghost" id="supp-copy" style="margin-top:10px">Скопировать @obounka</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+const SUPPORT = "obounka";
+const RARITY = {
+  common:{label:"Обычный",  cls:"common", ico:"🃏"},
+  rare:{label:"Редкий",     cls:"rare",   ico:"💠"},
+  epic:{label:"Эпический",  cls:"epic",   ico:"🔮"},
+  legend:{label:"Легендарный",cls:"legend",ico:"👑"},
+  myth:{label:"Мифический", cls:"myth",   ico:"🔥"}
+};
+const PRIZES = [
+  {name:"Обычный НФТ-стикер",       rarity:"common", w:40},
+  {name:"Редкий НФТ-значок",        rarity:"rare",   w:25},
+  {name:"Эпический НФТ-скин",       rarity:"epic",   w:18},
+  {name:"Легендарный НФТ-подарок",  rarity:"legend", w:10},
+  {name:"Мифический НФТ-аватар",    rarity:"myth",   w:5},
+  {name:"Джекпот: НФТ коллекции",   rarity:"myth",   w:2}
+];
+const KEY_INV = "destroit_inventory";
+const KEY_DAILY = "destroit_daily_ts";
+const COOLDOWN = 24*60*60*1000;
+
+if (tg){
+  tg.ready();
+  tg.expand();
+  if (tg.setHeaderColor) tg.setHeaderColor("#0b0714");
+  if (tg.setBackgroundColor) tg.setBackgroundColor("#0b0714");
+  if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+  const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+  if (u){
+    document.getElementById("hello").textContent = "Привет, " + (u.first_name || "игрок") + "! Открывай кейсы и собирай НФТ подарки.";
+  }
+  if (tg.MainButton){ tg.MainButton.hide(); }
+}
+
+function haptic(type){
+  if (!tg || !tg.HapticFeedback) return;
+  if (type === "success") tg.HapticFeedback.notificationOccurred("success");
+  else if (type === "warning") tg.HapticFeedback.notificationOccurred("warning");
+  else tg.HapticFeedback.impactOccurred("medium");
+}
+
+function toast(text){
+  const el = document.getElementById("toast");
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function inventory(){ try { return JSON.parse(localStorage.getItem(KEY_INV) || "[]"); } catch(e){ return []; } }
+function saveInventory(list){ localStorage.setItem(KEY_INV, JSON.stringify(list.slice(-200))); }
+
+function addItem(prize){
+  const list = inventory();
+  list.push({name:prize.name, rarity:prize.rarity, at:Date.now()});
+  saveInventory(list);
+}
+
+function rollPrize(){
+  const total = PRIZES.reduce((s,p) => s + p.w, 0);
+  let r = Math.random() * total;
+  for (const p of PRIZES){ r -= p.w; if (r <= 0) return p; }
+  return PRIZES[0];
+}
+
+function renderInventory(){
+  const list = inventory();
+  const wrap = document.getElementById("inv-list");
+  const order = ["common","rare","epic","legend","myth"];
+  document.getElementById("stat-count").textContent = list.length;
+  const best = list.reduce((a,i) => Math.max(a, order.indexOf(i.rarity)), -1);
+  document.getElementById("stat-best").textContent = best < 0 ? "—" : RARITY[list.find(i => order.indexOf(i.rarity) === best).rarity].label;
+  if (!list.length){
+    wrap.innerHTML = '<div class="empty">Инвентарь пока пуст 🕳<br>Открой ежедневный кейс или крути рулетку удачи.</div>';
+    return;
+  }
+  wrap.innerHTML = list.slice().reverse().map(i => {
+    const r = RARITY[i.rarity] || RARITY.common;
+    const d = new Date(i.at || Date.now());
+    const dt = d.toLocaleDateString("ru-RU", {day:"2-digit", month:"2-digit"}) + " " + d.toLocaleTimeString("ru-RU", {hour:"2-digit", minute:"2-digit"});
+    return '<div class="item ' + r.cls + '"><div>' + r.ico + '</div><div class="nm">' + i.name +
+      '<div class="dt">' + r.label + ' · ' + dt + '</div></div></div>';
+  }).join("");
+}
+
+document.querySelectorAll(".tile").forEach(t => {
+  t.addEventListener("click", () => {
+    haptic();
+    document.querySelectorAll(".tile").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x => x.classList.remove("show"));
+    t.classList.add("active");
+    document.getElementById("panel-" + t.dataset.tab).classList.add("show");
+    if (t.dataset.tab === "inv") renderInventory();
+    if (window.scrollTo) window.scrollTo({top:0, behavior:"smooth"});
+  });
+});
+
+let dailyLeft = 0;
+function tickDaily(){
+  const last = Number(localStorage.getItem(KEY_DAILY) || 0);
+  const left = COOLDOWN - (Date.now() - last);
+  const btn = document.getElementById("case-btn");
+  const timer = document.getElementById("case-timer");
+  if (left > 0){
+    const h = Math.floor(left / 3600000);
+    const m = Math.floor((left % 3600000) / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    timer.innerHTML = String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0") + "<small>До следующего кейса</small>";
+    btn.disabled = true;
+    btn.textContent = "Кейс уже открыт";
+  } else {
+    timer.innerHTML = "Готово к открытию<small>Нажми кнопку ниже</small>";
+    btn.disabled = false;
+    btn.textContent = "Открыть кейс";
+  }
+}
+setInterval(tickDaily, 1000);
+tickDaily();
+
+document.getElementById("case-btn").addEventListener("click", () => {
+  const last = Number(localStorage.getItem(KEY_DAILY) || 0);
+  if (Date.now() - last < COOLDOWN){ haptic("warning"); return; }
+  const box = document.getElementById("case-box");
+  const btn = document.getElementById("case-btn");
+  const prize = rollPrize();
+  btn.disabled = true;
+  box.classList.add("shake");
+  box.textContent = "🎁";
+  document.getElementById("case-reveal").textContent = "";
+  let ticks = 0;
+  const timer = setInterval(() => {
+    box.textContent = ["🎁","📦","🎁","✨"][ticks % 4];
+    ticks++;
+  }, 110);
+  setTimeout(() => {
+    clearInterval(timer);
+    box.classList.remove("shake");
+    box.classList.add("win");
+    const r = RARITY[prize.rarity];
+    box.textContent = r.ico;
+    document.getElementById("case-reveal").innerHTML = '🎉 Ты выбил: <b style="color:var(--gold)">' + prize.name + '</b><br><span style="font-size:12px;color:var(--muted)">Редкость: ' + r.label + '</span>';
+    localStorage.setItem(KEY_DAILY, String(Date.now()));
+    addItem(prize);
+    renderInventory();
+    haptic("success");
+    const send = document.getElementById("case-send");
+    send.style.display = "block";
+    send.onclick = () => {
+      if (!tg) return;
+      tg.sendData(JSON.stringify({action:"daily_case", prize:prize.name, rarity:prize.rarity}));
+    };
+    tickDaily();
+  }, 1500);
+});
+
+let spinning = false;
+function buildReel(){
+  const reel = document.getElementById("reel");
+  const items = [];
+  const COUNT = 34;
+  const winIndex = 30;
+  for (let i = 0; i < COUNT; i++){
+    const p = rollPrize();
+    items.push(i === winIndex ? null : p);
+  }
+  reel.dataset.winIndex = String(winIndex);
+  reel.innerHTML = items.map(it => {
+    if (!it) return '<div class="slot" id="win-slot">❔<span>?</span></div>';
+    const r = RARITY[it.rarity];
+    return '<div class="slot">' + r.ico + '<span>' + it.name + '</span></div>';
+  }).join("");
+  reel.style.transition = "none";
+  reel.style.transform = "translateX(0)";
+  return items;
+}
+
+buildReel();
+
+document.getElementById("spin-btn").addEventListener("click", () => {
+  if (spinning) return;
+  spinning = true;
+  const btn = document.getElementById("spin-btn");
+  btn.disabled = true;
+  const reel = document.getElementById("reel");
+  const prize = rollPrize();
+  const winIndex = Number(reel.dataset.winIndex);
+  const slot = document.getElementById("win-slot");
+  const r = RARITY[prize.rarity];
+  slot.innerHTML = r.ico + "<span>" + prize.name + "</span>";
+  slot.classList.add(r.cls);
+
+  const slotW = 92;
+  const wrapW = document.querySelector(".reel-wrap").clientWidth;
+  const target = winIndex * slotW + 10 + 41 - wrapW / 2;
+  document.getElementById("roul-reveal").textContent = "";
+  reel.style.transition = "transform 3.4s cubic-bezier(.12,.72,.14,1)";
+  reel.style.transform = "translateX(" + (-target) + "px)";
+  haptic();
+
+  setTimeout(() => {
+    document.getElementById("roul-reveal").innerHTML = '🍀 Выигрыш: <b style="color:var(--gold)">' + prize.name + '</b><br><span style="font-size:12px;color:var(--muted)">Редкость: ' + r.label + '</span>';
+    addItem(prize);
+    renderInventory();
+    haptic("success");
+    spinning = false;
+    btn.disabled = false;
+    setTimeout(buildReel, 900);
+  }, 3500);
+});
+
+document.getElementById("supp-btn").addEventListener("click", () => {
+  haptic();
+  const url = "https://t.me/" + SUPPORT;
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+  else window.open(url, "_blank");
+});
+document.getElementById("supp-copy").addEventListener("click", () => {
+  const text = "@" + SUPPORT;
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast("Ник скопирован: " + text), () => toast(text));
+  else toast(text);
+});
+
+renderInventory();
+</script>
+</body>
+</html>
